@@ -473,6 +473,9 @@ def add_knowledge():
         return jsonify({'error': f'Erro no banco de dados: {str(e)}'}), 500
 
 
+# Chame a função de inicialização aqui, no escopo principal
+init_db()
+
+# Mantenha apenas o app.run dentro do if, para testes locais
 if __name__ == '__main__':
-    init_db()
     app.run(host='0.0.0.0', port=5001, debug=True)
