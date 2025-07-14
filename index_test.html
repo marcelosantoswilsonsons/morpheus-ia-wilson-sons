@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wilson Sons - Morpheus IA - Análise de Cargas</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --primary: #071630;
+      --secondary: #00B3E3;
+      --accent: #FF6B00;
+      --light: #e6f2ff;
+      --dark: #051027;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #dc3545;
+      --info: #17a2b8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: linear-gradient(135deg, #e6f2ff 0%, #cce6ff 100%); color: #333; min-height: 100vh; }
+    header { background: var(--primary); padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; border-bottom: 3px solid var(--secondary); color: white; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); position: relative; z-index: 100; height: 85px; }
+    .logo-container { display: flex; align-items: center; gap: 15px; }
+    header img { height: 50px; filter: drop-shadow(0 0 5px rgba(0, 179, 227, 0.5)); }
+    header h1 { font-size: 1.4rem; margin: 0; font-weight: 600; }
+    .ai-tag { background: var(--secondary); padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-left: 10px; }
+    .container { display: flex; height: calc(100vh - 85px); padding: 20px; gap: 20px; }
+    .upload-panel { width: 35%; background: rgba(255, 255, 255, 0.9); border-radius: 12px; padding: 20px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; border: 1px solid rgba(0, 179, 227, 0.2); height: 100%; overflow-y: auto; }
+    .panel-title { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--primary); padding-bottom: 10px; border-bottom: 2px solid var(--secondary); }
+    .panel-title i { font-size: 1.4rem; color: var(--secondary); }
+    .drop-zone { border: 2px dashed var(--secondary); padding: 30px; text-align: center; color: #555; border-radius: 10px; margin-bottom: 15px; background-color: rgba(0, 179, 227, 0.05); transition: all 0.3s ease; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 150px; }
+    .drop-zone i { font-size: 3rem; color: var(--secondary); margin-bottom: 15px; }
+    .drop-zone.dragover { background-color: rgba(0, 179, 227, 0.15); transform: scale(1.02); }
+    .file-types { font-size: 0.85rem; margin-top: 10px; color: #666; }
+    .upload-btn { background: linear-gradient(135deg, var(--secondary) 0%, #0087b3 100%); border: none; color: white; font-weight: 600; padding: 12px 20px; border-radius: 8px; cursor: pointer; transition: all 0.3s; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1rem; box-shadow: 0 4px 8px rgba(0, 179, 227, 0.3); }
+    .upload-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0, 179, 227, 0.4); }
+    .upload-btn:disabled { background: #cccccc; cursor: not-allowed; transform: none; box-shadow: none; }
+    #fileName { font-size: 0.9rem; margin-top: 15px; color: #333; background: rgba(0, 179, 227, 0.1); padding: 10px; border-radius: 6px; border-left: 3px solid var(--secondary); word-break: break-all; }
+    .suggestion-box { background: rgba(0, 179, 227, 0.1); border-radius: 8px; padding: 15px; margin-top: 20px; border-left: 3px solid var(--secondary); font-size: 0.9rem;}
+    /* Knowledge Base Section */
+    .knowledge-section { margin-top: 20px; background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(0, 0, 0, 0.1); border-radius: 10px; padding: 15px; }
+    .knowledge-section h3 { display: flex; align-items: center; gap: 8px; color: var(--primary); margin-bottom: 12px; font-size: 1.1rem; cursor: pointer; }
+    #knowledgeFormContainer { display: none; margin-top: 15px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+    .form-group input, .form-group textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    #knowledgeStatus { margin-top: 10px; font-weight: bold; }
+    /* Chat Panel */
+    .chat-panel { width: 65%; display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.9); border-radius: 12px; padding: 20px; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); border: 1px solid rgba(0, 179, 227, 0.2); height: 100%; }
+    .chat-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid var(--secondary); flex-shrink: 0; }
+    .ai-avatar { width: 50px; height: 50px; background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: bold; flex-shrink: 0; }
+    .chat-title-container { display: flex; flex-direction: column; }
+    .chat-title { font-size: 1.3rem; color: var(--primary); font-weight: 600; }
+    .ai-status { display: flex; align-items: center; gap: 5px; background: rgba(0, 179, 227, 0.1); padding: 3px 10px; border-radius: 20px; font-size: 0.85rem; color: var(--secondary); width: fit-content; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+    .chat-box { flex-grow: 1; overflow-y: auto; padding: 10px; border-radius: 10px; background-color: rgba(247, 251, 255, 0.7); border: 1px solid rgba(204, 224, 255, 0.5); margin-bottom: 15px; display: flex; flex-direction: column; gap: 12px; }
+    .message { padding: 12px 18px; border-radius: 18px; max-width: 85%; line-height: 1.5; position: relative; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05); animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .user { background: linear-gradient(135deg, #d0ecff 0%, #b3e0ff 100%); color: #111; align-self: flex-end; border-bottom-right-radius: 4px; }
+    .bot { background: white; color: #111; align-self: flex-start; border-bottom-left-radius: 4px; }
+    .message-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; color: var(--primary); }
+    .message-content { line-height: 1.6; }
+    .message-content ul, .message-content ol { padding-left: 20px; margin: 8px 0; }
+    .message-content code { background-color: #eee; padding: 2px 5px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; }
+    .message-content pre { background-color: #eee; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; }
+    .analysis-card { background: white; border-radius: 8px; padding: 15px; margin: 10px 0; border: 1px solid #e0e0e0; }
+    .card-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem; }
+    .card-row:last-child { border-bottom: none; }
+    .card-row span:first-child { font-weight: 600; color: #333; }
+    .card-row span:last-child { text-align: right; color: #555; }
+    .alert-card { background-color: rgba(220, 53, 69, 0.1); border-left: 4px solid var(--danger); padding: 15px; }
+    .justification-card { background-color: rgba(0, 179, 227, 0.05); border-left: 4px solid var(--secondary); padding: 15px; }
+    .input-area { display: flex; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 1px solid #cce0ff; flex-shrink: 0; position: relative; }
+    .input-area input[type="text"] { flex-grow: 1; padding: 14px 18px; border: none; font-size: 1rem; outline: none; background: transparent; }
+    .input-area button { background: linear-gradient(135deg, var(--secondary) 0%, #0087b3 100%); border: none; color: white; font-weight: bold; padding: 0 25px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+    .input-area button:hover { background: linear-gradient(135deg, #00a1d1 0%, #007399 100%); }
+    .input-area button i { font-size: 1.2rem; }
+    .input-area .mic-btn { background: transparent; padding: 0 15px; color: var(--secondary); }
+    .input-area .mic-btn.is-recording { color: var(--accent); animation: pulse 1.5s infinite; }
+    .input-area.dragover { border: 2px dashed var(--accent); background: rgba(255, 107, 0, 0.05); }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+    /* Responsive Design */
+    @media (max-width: 992px) {
+      .container { flex-direction: column; height: auto; overflow-y: auto; }
+      .upload-panel, .chat-panel { width: 100%; height: auto; margin-bottom: 20px; }
+      .chat-box { height: 50vh; }
+      header h1 { font-size: 1.1rem; }
+    }
+    @media (max-width: 480px) {
+      header { flex-direction: column; height: auto; padding: 10px; text-align: center; }
+      .logo-container { flex-direction: column; margin-bottom: 10px; }
+      header h1 { font-size: 1rem; }
+      .container { padding: 10px; gap: 10px; }
+      .upload-panel, .chat-panel { padding: 15px; }
+      .drop-zone { padding: 20px; min-height: 120px; }
+      .input-area button { padding: 0 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo-container">
+      <img src="/static/default.png" alt="Logo Wilson Sons">
+      <h1>Wilson Sons Armazém Salvador <span class="ai-tag">Morpheus IA</span></h1>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="upload-panel">
+      <div class="panel-title"><i class="fas fa-file-upload"></i><h2>Upload do Documento</h2></div>
+      <div id="dropZone" class="drop-zone">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p>Arraste e solte o arquivo aqui<br>ou clique para selecionar</p>
+          <div class="file-types">PDF, XLSX, JPG, PNG</div>
+          <input type="file" id="fileInput" hidden>
+      </div>
+      <button id="uploadBtn" class="upload-btn" onclick="enviarArquivo()"><i class="fas fa-search"></i> Analisar Documento</button>
+      <p id="fileName"></p>
+      
+      <div class="suggestion-box">
+        <p><strong>Dica:</strong> Para melhores resultados, envie:</p>
+        <ul><li>Bill of Lading (BL)</li><li>Packing List</li><li>FISPQ (cargas perigosas)</li></ul>
+      </div>
+
+      <div class="knowledge-section">
+        <h3 id="knowledgeHeader"><i class="fas fa-brain"></i> Adicionar Conhecimento à Base (Modo Inteligente)</h3>
+        <div id="knowledgeFormContainer">
+          <div class="form-group">
+            <label for="knowledgeCategory">Categoria</label>
+            <input type="text" id="knowledgeCategory" placeholder="Ex: equipments, special_cases, operational_rules">
+          </div>
+          <div class="form-group">
+            <label for="knowledgeKey">Chave (Nome do item)</label>
+            <input type="text" id="knowledgeKey" placeholder="Ex: Empilhadeira Hyster, Acido Sulfurico, altura_maxima">
+          </div>
+          <div class="form-group">
+            <label for="knowledgeText">Descreva a Informação (Linguagem Natural)</label>
+            <textarea id="knowledgeText" rows="4" placeholder="Ex: a nova empilhadeira tem capacidade para 15 toneladas e é a diesel"></textarea>
+          </div>
+          <button class="upload-btn" onclick="adicionarConhecimentoSmart()"><i class="fas fa-magic"></i> Estruturar e Adicionar</button>
+          <p id="knowledgeStatus"></p>
+        </div>
+      </div>
+
+    </div>
+    
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="ai-avatar">M</div>
+        <div class="chat-title-container">
+          <div class="chat-title">Morpheus IA - Assistente de Análise de Cargas</div>
+          <div class="ai-status"><div class="status-dot"></div><span>Online</span></div>
+        </div>
+      </div>
+      <div class="chat-box" id="chatBox">
+        <div class="message bot">
+            <div class="message-header"><i class="fas fa-robot"></i><span>Morpheus IA</span></div>
+            <div class="message-content">🚢 Olá! Sou <strong>Morpheus</strong>, seu assistente especializado em análise de cargas. Envie um documento para iniciar a análise ou faça uma pergunta.</div>
+        </div>
+      </div>
+      <div class="input-area" id="inputArea">
+        <input type="text" id="userInput" placeholder="Faça uma pergunta ou arraste um áudio aqui..." onkeypress="if(event.key === 'Enter') enviarMensagem()">
+        <button class="mic-btn" id="micBtn" onclick="toggleRecording()"><i id="micIcon" class="fas fa-microphone"></i></button>
+        <button onclick="enviarMensagem()"><i class="fas fa-paper-plane"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Para produção (exemplo)
+    const API_URL = "https://morpheus-ia.onrender.com";
+    const state = {
+      arquivoSelecionado: null,
+      chatHistory: [],
+      isRecording: false,
+      mediaRecorder: null,
+      audioChunks: [],
+      currentDocId: null
+    };
+
+    // DOM Elements
+    const doc = id => document.getElementById(id);
+    const dropZone = doc('dropZone');
+    const fileInput = doc('fileInput');
+    const chatBox = doc('chatBox');
+    const uploadBtn = doc('uploadBtn');
+    const userInput = doc('userInput');
+    const micBtn = doc('micBtn');
+    const micIcon = doc('micIcon');
+    const inputArea = doc('inputArea');
+
+    function handlePaste(event) {
+        const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+        for (let index in items) {
+            const item = items[index];
+            if (item.kind === 'file' && item.type.indexOf('image') !== -1) {
+                event.preventDefault(); 
+                const imageFile = item.getAsFile();
+                state.arquivoSelecionado = imageFile;
+                doc('fileName').innerHTML = `<i class="fas fa-image"></i> Analisando imagem colada...`;
+                adicionarMensagem("Analisando imagem colada da área de transferência...", 'user');
+                enviarArquivo(); 
+                return;
+            }
+        }
+    }
+
+    doc('knowledgeHeader').addEventListener('click', () => {
+      const formContainer = doc('knowledgeFormContainer');
+      if (formContainer.style.display === 'block') {
+        formContainer.style.display = 'none';
+        return;
+      }
+      const password = prompt('Para modificar a base de conhecimento, digite a senha:');
+      if (password === "Arquitas de Tarento") {
+        formContainer.style.display = 'block';
+      } else if (password) {
+        alert('Senha incorreta!');
+      }
+    });
+
+    // --- LÓGICA DE CONHECIMENTO ATUALIZADA ---
+    async function adicionarConhecimentoSmart() {
+        const category = doc('knowledgeCategory').value.trim();
+        const key = doc('knowledgeKey').value.trim();
+        const text = doc('knowledgeText').value.trim();
+        const statusEl = doc('knowledgeStatus');
+        statusEl.textContent = 'A IA está processando e estruturando a informação...';
+        statusEl.style.color = 'blue';
+
+        if (!category || !key || !text) {
+            statusEl.textContent = 'Todos os campos são obrigatórios.';
+            statusEl.style.color = 'red';
+            return;
+        }
+
+        try {
+            // Etapa 1: Enviar texto para a IA estruturar
+            const smartResponse = await fetch(`${API_URL}/add-knowledge-smart`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category, key, text })
+            });
+
+            const smartData = await smartResponse.json();
+
+            if (!smartResponse.ok) {
+                throw new Error(smartData.error || 'Erro desconhecido da IA.');
+            }
+
+            const structuredJson = smartData.structured_json;
+            
+            // Etapa 2: Confirmação do usuário
+            const isConfirmed = confirm(`A IA estruturou a informação da seguinte forma. Você aprova?\n\n${structuredJson}`);
+
+            if (isConfirmed) {
+                // Etapa 3: Salvar o JSON confirmado no banco de dados
+                statusEl.textContent = 'Salvando informação confirmada...';
+                const saveResponse = await fetch(`${API_URL}/add-knowledge`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        password: "Arquitas de Tarento",
+                        category, 
+                        key, 
+                        value: structuredJson // Envia o JSON que a IA gerou
+                    })
+                });
+
+                const saveData = await saveResponse.json();
+                if(saveResponse.ok) {
+                    statusEl.textContent = saveData.success;
+                    statusEl.style.color = 'green';
+                    doc('knowledgeCategory').value = '';
+                    doc('knowledgeKey').value = '';
+                    doc('knowledgeText').value = '';
+                } else {
+                    throw new Error(saveData.error);
+                }
+            } else {
+                statusEl.textContent = 'Operação cancelada pelo usuário.';
+                statusEl.style.color = 'orange';
+            }
+
+        } catch (error) {
+            statusEl.textContent = `Erro: ${error.message}`;
+            statusEl.style.color = 'red';
+        }
+    }
+
+    async function toggleRecording() {
+      if (state.isRecording) {
+        state.mediaRecorder.stop();
+        return;
+      }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        adicionarMensagem("Seu navegador não suporta gravação de áudio.", 'bot');
+        return;
+      }
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        state.isRecording = true;
+        micIcon.classList.remove('fa-microphone');
+        micIcon.classList.add('fa-stop');
+        micBtn.classList.add('is-recording');
+        
+        state.audioChunks = [];
+        state.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+        state.mediaRecorder.ondataavailable = event => {
+          state.audioChunks.push(event.data);
+        };
+        
+        state.mediaRecorder.onstop = async () => {
+          micIcon.classList.remove('fa-stop');
+          micIcon.classList.add('fa-microphone');
+          micBtn.classList.remove('is-recording');
+          state.isRecording = false;
+
+          const audioBlob = new Blob(state.audioChunks, { type: 'audio/webm' });
+          stream.getTracks().forEach(track => track.stop());
+          await sendAudioToServer(audioBlob, 'recording.webm');
+        };
+
+        state.mediaRecorder.start();
+      } catch (err) {
+        console.error('Microphone access error:', err);
+        adicionarMensagem("❌ Permissão de microfone negada. Habilite o acesso nas configurações do seu navegador.", 'bot');
+      }
+    }
+    
+    async function sendAudioToServer(audioBlob, fileName = 'audio-file') {
+      const tempId = 'msg-' + Date.now();
+      adicionarMensagem({ isProcessing: true, id: tempId }, 'user');
+
+      const formData = new FormData();
+      formData.append('audio', audioBlob, fileName);
+
+      try {
+        const response = await fetch(`${API_URL}/speech-to-text`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        const tempMessageElement = doc(tempId);
+
+        if (response.ok) {
+          if (tempMessageElement) {
+            tempMessageElement.querySelector('.message-content').innerHTML = `🎤 ${data.text}`;
+          }
+          enviarMensagem(data.text);
+        } else {
+          if (tempMessageElement) {
+            tempMessageElement.querySelector('.message-content').innerHTML = `❌ Erro no processamento de áudio: ${data.error || 'Erro desconhecido.'}`;
+          }
+        }
+      } catch (e) {
+        const tempMessageElement = doc(tempId);
+        if (tempMessageElement) {
+            tempMessageElement.querySelector('.message-content').innerHTML = "❌ Erro de conexão com o servidor de áudio.";
+        }
+      }
+    }
+
+    function setupDragAndDrop() {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, e => e.preventDefault(), false);
+        inputArea.addEventListener(eventName, e => e.preventDefault(), false);
+      });
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        inputArea.addEventListener(eventName, () => inputArea.classList.add('dragover'), false);
+      });
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        inputArea.addEventListener(eventName, () => inputArea.classList.remove('dragover'), false);
+      });
+
+      dropZone.addEventListener('drop', handleFileDrop, false);
+      inputArea.addEventListener('drop', handleAudioDrop, false);
+      fileInput.addEventListener('change', () => handleFileSelect(fileInput.files));
+      dropZone.addEventListener('click', () => fileInput.click());
+    }
+    
+    function handleFileDrop(e) {
+      handleFileSelect(e.dataTransfer.files);
+    }
+    
+    function handleAudioDrop(e) {
+      const file = e.dataTransfer.files[0];
+      if (file && (file.type.startsWith('audio/') || file.name.match(/\.(wav|flac|ogg)$/i))) {
+        sendAudioToServer(file, file.name);
+      } else {
+        adicionarMensagem("Arraste apenas arquivos de áudio para esta área.", 'bot');
+      }
+    }
+
+    function handleFileSelect(files) {
+      if (files.length > 0) {
+        state.arquivoSelecionado = files[0];
+        doc('fileName').innerHTML = `<i class="fas fa-file-alt"></i> ${state.arquivoSelecionado.name}`;
+      }
+    }
+
+    async function enviarArquivo() {
+        if (!state.arquivoSelecionado) {
+          adicionarMensagem("⚠️ Por favor, selecione um arquivo primeiro.", 'bot');
+          return;
+        }
+        
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
+        
+        const formData = new FormData();
+        formData.append('file', state.arquivoSelecionado);
+
+        try {
+            const res = await fetch(`${API_URL}/upload`, { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            if (res.ok && data.analise && !data.analise.error) {
+                state.currentDocId = data.doc_id;
+                adicionarMensagem({ analise: data.analise, arquivo: data.arquivo || 'imagem colada' }, 'bot');
+            } else {
+                adicionarMensagem(`❌ Erro na análise: ${data.error || 'Ocorreu um problema desconhecido.'}`, 'bot');
+            }
+        } catch (e) {
+            adicionarMensagem("❌ Erro de conexão. Verifique se o servidor está rodando.", 'bot');
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-search"></i> Analisar Documento';
+            state.arquivoSelecionado = null;
+            doc('fileName').innerHTML = '';
+            fileInput.value = '';
+        }
+    }
+
+    async function enviarMensagem(messageText = null) {
+        const texto = messageText !== null ? messageText : userInput.value.trim();
+        if (texto === '') return;
+
+        if (messageText === null) {
+            adicionarMensagem(texto, 'user');
+        }
+        
+        userInput.value = '';
+        
+        addTypingIndicator();
+
+        try {
+            const payload = {
+                message: texto,
+                history: state.chatHistory,
+                doc_id: state.currentDocId
+            };
+            
+            const res = await fetch(`${API_URL}/chat`, { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'}, 
+                body: JSON.stringify(payload) 
+            });
+            
+            const data = await res.json();
+            removeTypingIndicator();
+            adicionarMensagem(data.response, 'bot');
+
+        } catch (e) {
+            removeTypingIndicator();
+            adicionarMensagem("❌ Erro de conexão com o chat. Verifique o servidor.", 'bot');
+        }
+    }
+    
+    function adicionarMensagem(data, tipo) {
+      if (typeof data !== 'object' || !data.isProcessing) {
+          state.chatHistory.push({ role: tipo, content: typeof data === 'string' ? data : JSON.stringify(data) });
+          if (state.chatHistory.length > 10) state.chatHistory.shift();
+      }
+
+      const div = document.createElement('div');
+      div.className = `message ${tipo}`;
+      
+      const header = (tipo === 'user') ? 
+        '<div class="message-header"><i class="fas fa-user"></i> <span>Você</span></div>' : 
+        '<div class="message-header"><i class="fas fa-robot"></i> <span>Morpheus IA</span></div>';
+      
+      let content = '<div class="message-content"></div>';
+      
+      div.innerHTML = header + content;
+      const contentEl = div.querySelector('.message-content');
+      
+      if (typeof data === 'object' && data.isProcessing) {
+          div.id = data.id;
+          contentEl.innerHTML = '🎤 Processando áudio...';
+      } else if (typeof data === 'object' && data !== null && data.analise) {
+        contentEl.innerHTML = formatAnalysis(data.analise, data.arquivo);
+      } else {
+        contentEl.innerHTML = marked.parse(data.toString());
+      }
+      
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+    
+    function formatAnalysis(analise, arquivo) {
+      let alertsHtml = '';
+      if (analise.alerts && analise.alerts.length > 0) {
+        alertsHtml = `
+          <h3>🚨 Alertas</h3>
+          <div class="analysis-card alert-card">
+            ${analise.alerts.map(a => `<div><i class="fas fa-exclamation-triangle"></i> ${a}</div>`).join('')}
+          </div>
+        `;
+      }
+
+      return `
+          <h3>📊 Resultados da Análise: ${arquivo || ''}</h3>
+          <div class="analysis-card">
+            <div class="card-row"><span>Produto:</span><span>${analise.product || 'N/A'}</span></div>
+            <div class="card-row"><span>NCM:</span><span>${analise.ncm || 'N/A'} - ${analise.ncm_description || ''}</span></div>
+            <div class="card-row"><span>Peso Total:</span><span>${analise.weight || 'N/A'}</span></div>
+            <div class="card-row"><span>Pacotes:</span><span>${analise.packages || 'N/A'}</span></div>
+            <div class="card-row"><span>Peso Unitário:</span><span>${analise.peso_unitario || 'N/A'}</span></div>
+            <div class="card-row"><span>Container:</span><span>${analise.container_type || 'N/A'} (${analise.iso_code || 'N/A'})</span></div>
+            <div class="card-row"><span>Carga Perigosa (IMO):</span><span>${analise.imo_detected ? 'Sim' : 'Não'}</span></div>
+          </div>
+          <h3>🚚 Sugestão Operacional</h3>
+          <div class="analysis-card">
+            <div class="card-row"><span>Tipo de Desova:</span><span>${analise.desova_suggestion || 'N/A'}</span></div>
+            <div class="card-row"><span>Equipamento:</span><span>${analise.equipamento_suggestion || 'N/A'}</span></div>
+            <div class="card-row"><span>Equipe Sugerida:</span><span>${analise.equipe_suggestion || 'N/A'}</span></div>
+            <div class="card-row"><span>Armazenamento:</span><span>${analise.armazenamento_suggestion || 'N/A'}</span></div>
+            <div class="card-row"><span>Tempo Estimado:</span><span>${analise.tempo_estimado || 'N/A'}</span></div>
+          </div>
+          ${alertsHtml}
+          <h3>📝 Justificativa</h3>
+          <div class="analysis-card justification-card">
+            ${analise.justification || 'N/A'}
+          </div>
+      `;
+    }
+
+    function addTypingIndicator() {
+        const div = document.createElement('div');
+        div.className = 'message bot typing-indicator';
+        div.innerHTML = `
+          <div class="message-header"><i class="fas fa-robot"></i> <span>Morpheus IA</span></div>
+          <div class="message-content"><i class="fas fa-spinner fa-pulse"></i></div>
+        `;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+        const indicator = chatBox.querySelector('.typing-indicator');
+        if (indicator) {
+            chatBox.removeChild(indicator);
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      setupDragAndDrop();
+      inputArea.addEventListener('paste', handlePaste);
+    });
+</script>
