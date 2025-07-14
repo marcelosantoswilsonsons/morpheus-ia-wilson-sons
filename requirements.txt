@@ -1,8 +1,9 @@
 flask
 flask_cors
+gunicorn
 google-generativeai
 pandas
 requests
-google-oauth2-service-account
+google-auth
 google-cloud-speech
 openpyxl
